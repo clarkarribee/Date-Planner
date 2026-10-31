@@ -20,3 +20,6 @@ You get a link like `https://yourname.netlify.app`.
 - Invitation links you send open in her browser. She does not need to install anything.
 - Photos and drafts are stored on the device only. They are not synced between devices.
 - To update: replace `index.html`, change `V` in `sw.js` (for example `sunflower-v2`), and upload again.
+
+## Her photo
+`her.png` is the circle photo shown in the middle of the sunflower. To change it, replace that file (square PNG, about 480px) and bump `V` in `sw.js`.

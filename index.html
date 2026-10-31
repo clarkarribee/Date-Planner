@@ -379,12 +379,12 @@ M.forEach((m,i)=>{const r=document.createElement('div');r.className='row';r.inne
 $('#sf').onsubmit=e=>{e.preventDefault();const v=$('#mi').value.trim();if(!v)return;M.push({t:v,at:Date.now()});store.set('sd_msgs',JSON.stringify(M.slice(-100)));$('#mi').value='';renderMsgs()};
 
 /* her face in the sunflower */
-const FACE_URL='';   // set to 'her.png' once her photo is added to this folder
-function faceSrc(){return FACE_URL||store.get('sd_face')||''}
+const FACE_URL='her.png';   // her photo, cropped into a circle (file in this folder)
+function faceSrc(){return store.get('sd_face')||FACE_URL||''}
 function faceCrop(file){return new Promise((res,rej)=>{const r=new FileReader();r.onerror=rej;r.onload=()=>{const im=new Image();im.onerror=rej;im.onload=()=>{const S=220,c=document.createElement('canvas');c.width=c.height=S;const x=c.getContext('2d');x.beginPath();x.arc(S/2,S/2,S/2,0,6.2832);x.clip();const k=Math.max(S/im.width,S/im.height),w=im.width*k,hh=im.height*k;x.drawImage(im,(S-w)/2,hh>S?-(hh-S)*.3:(S-hh)/2,w,hh);res(c.toDataURL('image/png'))};im.src=r.result};r.readAsDataURL(file)})}
-function faceCard(){const old=$('#facec');if(old)old.remove();if(FACE_URL||/^#(e|d)./.test(location.hash))return;
-const has=!!faceSrc(),d=document.createElement('div');d.id='facec';d.className='card';d.style.marginTop='14px';
-d.innerHTML=`<h2 class="script">${has?'Her face is in the sunflower 🌻':'Put her face in the sunflower 🌻'}</h2><p class="hint">Pick a photo. It stays on this device only.</p><div class="btns" style="min-height:0"><button type="button" class="btn" id="fpick">📷 ${has?'Change':'Choose'} photo</button>${has?'<button type="button" class="btn alt" id="frem">Remove</button>':''}</div><input type="file" id="fin" accept="image/*" class="hide">`;
+function faceCard(){const old=$('#facec');if(old)old.remove();if(/^#(e|d)./.test(location.hash))return;
+const has=!!store.get('sd_face'),d=document.createElement('div');d.id='facec';d.className='card';d.style.marginTop='14px';
+d.innerHTML=`<h2 class="script">Photo in the sunflower 🌻</h2><p class="hint">Only one photo at a time: a new one replaces the old one. Saved on this device only.</p><div class="btns" style="min-height:0"><button type="button" class="btn" id="fpick">📷 ${has?'Change':'Choose'} photo</button>${has?'<button type="button" class="btn alt" id="frem">'+(FACE_URL?'Use default':'Remove')+'</button>':''}</div><input type="file" id="fin" accept="image/*" class="hide">`;
 $('#menu').appendChild(d);$('#fpick').onclick=()=>$('#fin').click();
 const rm=$('#frem');if(rm)rm.onclick=()=>{try{localStorage.removeItem('sd_face')}catch(e){}renderMenu()};
 $('#fin').onchange=async e=>{const f=e.target.files[0];if(!f)return;try{localStorage.setItem('sd_face',await faceCrop(f));renderMenu();toast('Looking good 🌻')}catch(x){toast('Could not use that photo')}}}
@@ -399,7 +399,9 @@ if(!dip&&!ios)return;
 const d=document.createElement('div');d.id='inst';d.className='card';d.style.marginTop='14px';
 d.innerHTML=dip?'<h2 class="script">Install as an app 📲</h2><p class="hint">Add Date Planner to your home screen.</p><div class="btns" style="min-height:0"><button type="button" class="btn" id="instb">Install</button></div>':'<h2 class="script">Install as an app 📲</h2><p class="hint">Tap the Share button, then “Add to Home Screen”.</p>';
 m.appendChild(d);const b=$('#instb');if(b)b.onclick=async()=>{dip.prompt();try{await dip.userChoice}catch(e){}dip=null;d.remove()}}
-if('serviceWorker' in navigator&&location.protocol.indexOf('http')===0)addEventListener('load',()=>navigator.serviceWorker.register('sw.js').catch(()=>{}));
+if('serviceWorker' in navigator&&location.protocol.indexOf('http')===0){const had=!!navigator.serviceWorker.controller;let rl=false;
+navigator.serviceWorker.addEventListener('controllerchange',()=>{if(had&&!rl){rl=true;location.reload()}});
+addEventListener('load',()=>navigator.serviceWorker.register('sw.js').then(r=>r.update()).catch(()=>{}))}
 
 /* init */
 (function(){const h=location.hash.slice(1);
