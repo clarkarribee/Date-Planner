@@ -1,0 +1,468 @@
+<!DOCTYPE html>
+<html lang="en"><head><meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>Date Planner</title>
+<meta name="theme-color" content="#f48fb1">
+<meta name="description" content="A cute date invitation and memory planner">
+<meta name="mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="default">
+<meta name="apple-mobile-web-app-title" content="Date Planner">
+<link rel="manifest" href="manifest.webmanifest">
+<link rel="icon" type="image/png" href="icon-192.png">
+<link rel="apple-touch-icon" href="apple-touch-icon.png">
+<link href="https://fonts.googleapis.com/css2?family=Nunito:wght@400;700;800&family=Pacifico&display=swap" rel="stylesheet">
+<style>
+:root{--bg1:#ffe3ec;--bg2:#fff6e5;--card:#fffaf2;--ink:#5a2a3c;--muted:#8a5a6c;--pink:#f48fb1;--pink2:#d6578a;--soft:#ffd1e0;--sun:#ffc928;--line:#f6bfd2;box-sizing:border-box;padding-top:env(safe-area-inset-top,0px);padding-bottom:env(safe-area-inset-bottom,0px)}
+@media(prefers-color-scheme:dark){:root:not([data-theme="light"]){--bg1:#3a1a29;--bg2:#2e2216;--card:#4a2736;--ink:#ffe9f1;--muted:#f2bfd1;--soft:#5e3144;--line:#7a4560}}
+*{box-sizing:border-box;-webkit-tap-highlight-color:transparent}html{scroll-padding-top:env(safe-area-inset-top,0px);-webkit-text-size-adjust:100%;text-size-adjust:100%}button,input,textarea{touch-action:manipulation}:focus-visible{outline:3px solid var(--pink2);outline-offset:2px}
+body{margin:0;min-height:100vh;min-height:100dvh;font-family:Nunito,"Trebuchet MS",system-ui,sans-serif;color:var(--ink);background:linear-gradient(160deg,var(--bg1),var(--bg2));overflow-x:hidden}
+.script{font-family:Pacifico,"Brush Script MT",cursive;font-weight:400}
+#petals{position:fixed;top:0;right:0;bottom:0;left:0;pointer-events:none;z-index:0;overflow:hidden}
+#petals i{position:absolute;top:-30px;border-radius:80% 0 80% 0;background:linear-gradient(135deg,#ffe066,#ffb703);opacity:.7;animation:fall linear infinite;will-change:transform}
+#petals i.f{background:none;border-radius:0;font-style:normal;opacity:.8}
+@keyframes fall{to{transform:translate(var(--dx),110vh) rotate(var(--r))}}
+.wrap{position:relative;z-index:1;max-width:560px;margin:0 auto;padding:16px max(16px,env(safe-area-inset-right,0px)) 60px max(16px,env(safe-area-inset-left,0px))}
+nav{display:flex;gap:6px;justify-content:center;margin-bottom:14px;flex-wrap:wrap}
+nav button,.chip{min-height:44px;padding:0 16px;border-radius:999px;border:2px solid var(--line);background:var(--card);color:var(--ink);font:800 .95rem Nunito,sans-serif;cursor:pointer}
+nav button[aria-current=true]{background:var(--pink);border-color:var(--pink);color:#fff}
+.card{background:var(--card);border:2px solid var(--line);border-radius:26px;padding:22px 18px;box-shadow:0 8px 24px rgba(214,87,138,.15);text-align:center}
+h1,h2{margin:.2em 0;overflow-wrap:anywhere}h1{font-size:clamp(1.5rem,7vw,2.2rem);line-height:1.3}h2{font-size:clamp(1.1rem,4.5vw,1.4rem)}
+.sf{width:110px;height:110px;margin:0 auto;animation:sway 4s ease-in-out infinite}
+@keyframes sway{50%{transform:rotate(5deg)}}
+.det{list-style:none;padding:0;margin:14px 0;text-align:left;display:grid;gap:8px}
+.det li{background:var(--soft);border-radius:14px;padding:9px 12px;overflow-wrap:anywhere}
+.det b{display:block;font-size:.75rem;text-transform:uppercase;letter-spacing:.06em;color:var(--muted)}
+.btns{display:flex;gap:14px;justify-content:center;align-items:center;min-height:90px;flex-wrap:wrap}
+.btn{min-height:48px;padding:0 24px;border:0;border-radius:999px;font:800 1rem Nunito,sans-serif;cursor:pointer;color:#fff;background:linear-gradient(135deg,#ec6a9a,#c2477c);box-shadow:0 4px 12px rgba(194,71,124,.35);transition:transform .25s}
+.btn.alt{background:var(--card);color:var(--pink2);border:2px solid var(--line);box-shadow:none}
+#no{background:#fff;color:#7a4560;border:2px solid var(--line);box-shadow:none;transition:transform .3s,left .25s,top .25s,opacity .5s;z-index:5}
+#no.gone{opacity:0;transform:scale(0)!important;pointer-events:none}
+.hint{color:var(--muted);font-size:.9rem}
+label{display:block;font-weight:800;margin:14px 0 6px;text-align:left}
+input,textarea,select{width:100%;min-height:46px;padding:10px 12px;border-radius:14px;border:2px solid var(--line);background:#fff;color:#4a2030;font:inherit;font-size:16px;min-width:0;max-width:100%}input[type=date],input[type=time]{-webkit-appearance:none;appearance:none;display:block;text-align:left;line-height:1.2}
+textarea{min-height:76px;resize:vertical}
+.opts{display:flex;flex-wrap:wrap;gap:8px}
+.chip[aria-pressed=true]{background:var(--sun);border-color:#e0a800;color:#4a3300}
+.sw{width:44px;height:44px;border-radius:50%;border:3px solid #fff;box-shadow:0 0 0 2px var(--line);cursor:pointer;padding:0}
+.sw[aria-pressed=true]{box-shadow:0 0 0 3px var(--pink2)}
+.planner{text-align:left}
+.pv{margin-top:18px}
+.toast{max-width:90vw;text-align:center;position:fixed;left:50%;bottom:calc(20px + env(safe-area-inset-bottom,0px));transform:translateX(-50%);background:var(--pink2);color:#fff;padding:10px 18px;border-radius:999px;font-weight:800;z-index:20;opacity:0;pointer-events:none;transition:opacity .3s}
+.toast.on{opacity:1}
+.chat{display:grid;gap:12px;margin:12px 0;text-align:left;min-height:120px}
+.row{display:flex;align-items:flex-end;gap:8px;justify-content:flex-end}
+.bub{background:linear-gradient(135deg,#f48fb1,#e0679a);color:#fff;padding:10px 14px;border-radius:18px 18px 4px 18px;max-width:75%;overflow-wrap:anywhere}
+.bub small{display:block;opacity:.85;font-size:.7rem;margin-top:3px}
+.bq{position:relative;font-size:1.9rem;animation:pop .6s cubic-bezier(.3,1.6,.5,1) both}
+.bq i{position:absolute;font-style:normal;font-size:.7rem;animation:rise 2.4s ease-out infinite}
+.bq i:nth-child(1){left:-4px}.bq i:nth-child(2){right:-4px;animation-delay:.8s}
+@keyframes pop{from{transform:translateY(14px) scale(.3);opacity:0}}
+@keyframes rise{from{transform:translateY(0);opacity:1}to{transform:translateY(-26px) rotate(40deg);opacity:0}}
+.send{display:flex;gap:8px}.send input{flex:1}
+.empty{text-align:center;color:var(--muted)}
+.fx{position:fixed;left:50%;top:40%;font-size:1.6rem;pointer-events:none;z-index:10;animation:burst 1.8s ease-out forwards}
+@keyframes burst{to{transform:translate(var(--x),var(--y)) rotate(var(--r));opacity:0}}
+.cal{background:var(--soft);border-radius:18px;padding:10px}
+.calh{display:flex;align-items:center;justify-content:space-between;margin-bottom:8px}
+.calh strong{font-size:1.15rem}
+.calnav{width:44px;height:44px;border-radius:50%;border:2px solid var(--line);background:var(--card);color:var(--pink2);font:800 1.4rem Nunito,sans-serif;cursor:pointer;line-height:1;padding:0}
+.calnav:disabled{opacity:.35;cursor:default}
+.calg{display:grid;grid-template-columns:repeat(7,minmax(0,1fr));gap:4px}
+.cwd{text-align:center;font-size:.75rem;font-weight:800;color:var(--muted);padding:4px 0}
+.cd{aspect-ratio:1/1;min-height:36px;border:2px solid transparent;border-radius:50%;background:var(--card);color:var(--ink);font:700 .95rem Nunito,sans-serif;cursor:pointer;padding:0}
+.cd.td{border-color:var(--pink)}
+.cd.sel{background:var(--sun);border-color:#e0a800;color:#4a3300}
+.cd:disabled{opacity:.35;cursor:default}
+.calq{margin-top:10px;justify-content:center}
+.ic{background:var(--card);border:2px solid var(--line);border-radius:20px;padding:12px 14px;box-shadow:0 4px 14px rgba(214,87,138,.12);text-align:left}
+.ich{display:flex;align-items:center;gap:12px}
+.acts{display:flex;flex-wrap:wrap;gap:6px;margin-top:10px}
+.acts .chip{min-height:40px;padding:0 12px;font-size:.85rem}
+.chip.dng{color:#c0334d;border-color:#e9a0b0}
+.gal{display:grid;grid-template-columns:repeat(auto-fill,minmax(150px,1fr));gap:14px}
+.pol{margin:0;background:#fff;color:#4a2030;padding:8px 8px 10px;border-radius:6px;box-shadow:0 6px 16px rgba(90,42,60,.25);transform:rotate(-1deg)}
+.pol:nth-child(even){transform:rotate(1.2deg)}
+.pol img{display:block;width:100%;aspect-ratio:1/1;object-fit:cover;border-radius:3px;background:var(--soft)}
+.pol .cap{min-height:36px;margin-top:6px;border:0;border-bottom:2px dashed var(--line);border-radius:0;padding:4px 2px;font:700 .85rem Nunito,sans-serif;background:transparent;text-align:center}
+.polf{display:flex;justify-content:space-between;align-items:center;margin-top:6px}
+.polf small{color:#8a5a6c}
+.polf .chip{min-height:32px;padding:0 10px;font-size:.75rem;background:#fff;color:#4a2030}
+.mhero{margin-bottom:14px}
+.mlist{display:grid;gap:10px}
+.mi{display:flex;align-items:center;gap:12px;width:100%;min-height:64px;padding:10px 14px;text-align:left;background:var(--card);color:var(--ink);border:2px solid var(--line);border-radius:20px;box-shadow:0 4px 14px rgba(214,87,138,.12);font:inherit;cursor:pointer;transition:transform .2s,box-shadow .2s;opacity:0;animation:fadein .6s .1s forwards}
+.mi:hover{transform:translateY(-2px);box-shadow:0 8px 20px rgba(214,87,138,.22)}
+.mi:active{transform:scale(.98)}
+.mi.hist{cursor:default}.mi.hist:hover,.mi.hist:active{transform:none}
+.mic{flex:none;width:46px;height:46px;border-radius:50%;display:grid;place-items:center;font-size:1.4rem;background:linear-gradient(135deg,#ffe58a,#ffc928)}
+.mt{flex:1;min-width:0}.mt b{display:block}.mt small{display:block;color:var(--muted);overflow-wrap:anywhere}
+.mar{font-size:1.6rem;color:var(--pink2)}
+.mh{margin:22px 0 8px;text-align:center}
+.intro{position:relative;overflow:hidden}
+.fadeup{opacity:0;animation:up .9s ease-out forwards}
+@keyframes up{from{transform:translateY(14px);opacity:0}to{transform:none;opacity:1}}
+@keyframes fadein{to{opacity:1}}
+.bqt{display:block;width:min(78%,300px);height:auto;margin:6px auto}
+.stem{fill:none;stroke:#5aa03c;stroke-width:4;stroke-linecap:round;stroke-dasharray:1;stroke-dashoffset:1;animation:grow 1.2s ease-out forwards}
+@keyframes grow{to{stroke-dashoffset:0}}
+.fl{transform-box:fill-box;transform-origin:center;transform:scale(0) rotate(-90deg);animation:bloom 1s cubic-bezier(.3,1.5,.5,1) forwards}
+@keyframes bloom{to{transform:scale(1) rotate(0)}}
+.lf{opacity:0;animation:fadein .6s .8s forwards}
+.pap{opacity:0;animation:fadein .6s forwards}
+.hrt{position:absolute;bottom:-20px;pointer-events:none;opacity:0;animation:floatup linear infinite}
+@keyframes floatup{0%{transform:translateY(0);opacity:0}15%{opacity:.7}100%{transform:translateY(-560px) rotate(25deg);opacity:0}}
+.env{display:block;margin:12px auto 0;background:none;border:0;padding:6px;cursor:pointer;opacity:0;pointer-events:none;transition:opacity .8s;filter:drop-shadow(0 6px 10px rgba(214,87,138,.4))}
+.env.on{opacity:1;pointer-events:auto;animation:bob 1.8s ease-in-out infinite}
+@keyframes bob{50%{transform:translateY(-8px) rotate(-3deg)}}
+.remind{opacity:0;pointer-events:none;transition:opacity .8s;font-weight:800;color:var(--pink2);margin:6px 0 0}
+.remind.on{opacity:1;animation:pulse 1.5s ease-in-out infinite}
+@keyframes pulse{50%{transform:scale(1.06)}}
+.paper{margin-top:16px;padding:20px 18px;border-radius:16px;text-align:left;background:var(--soft);border:2px solid var(--line);line-height:1.6;animation:up .9s ease-out both}
+.paper p{margin:.6em 0}
+@media(prefers-reduced-motion:reduce){.intro *{animation-delay:0s!important}.env,.remind{animation:none!important}.hrt{display:none}}
+.hide{display:none!important}
+@media(max-width:360px){.wrap{padding-top:12px}.card{padding:18px 12px;border-radius:20px}.btn{padding:0 16px;font-size:.95rem}.sf{width:90px;height:90px}.bub{max-width:70%}nav button{padding:0 12px}}@media(min-width:768px){.wrap{max-width:640px;padding-top:28px}.card{padding:30px 28px}.sf{width:130px;height:130px}}@media(max-height:480px) and (orientation:landscape){.sf{width:64px;height:64px}.btns{min-height:70px}}@media(hover:hover){.btn:hover,nav button:hover,.chip:hover{filter:brightness(1.06)}}
+@media(prefers-reduced-motion:reduce){#petals,.sf,.bq i{display:none}*{animation-duration:.01s!important;transition-duration:.01s!important}.fx{display:none}}
+html,body{overscroll-behavior-y:none}
+.partner #m1,.partner #m2,.partner #m3,.partner #inew,.partner #nav [data-v=plan],.partner #nav [data-v=msgs],.partner #nav [data-v=intro],.partner .acts [data-a=copy],.partner .acts [data-a=ok],.partner .acts [data-a=edit],.partner .acts [data-a=del],.partner [data-del]{display:none!important}.partner #mlt{pointer-events:none}
+</style></head>
+<body>
+<div id="petals" aria-hidden="true"></div>
+<div class="wrap">
+<nav id="nav" aria-label="Pages">
+<button data-v="menu">🏠 Menu</button><button data-v="inv">💌 Invitations</button><button data-v="plan">🌸 Planner</button>
+</nav>
+
+<main>
+<section id="menu" class="hide"></section>
+<section id="inv" class="hide"></section>
+<section id="mem" class="hide"></section>
+<section id="intro" class="hide"></section>
+<section id="home"></section>
+
+<section id="yes" class="hide"></section>
+
+<section id="plan" class="hide">
+<div class="card planner">
+<h2 class="script" style="text-align:center">Plan a cute date 🌸</h2>
+<label for="msg">Personal message (optional)</label><textarea id="msg" placeholder="Write something sweet…"></textarea>
+<label id="l1">Date idea</label><div class="opts" id="food" role="group" aria-labelledby="l1"></div>
+<input id="foodC" class="hide" placeholder="Describe your date idea" aria-label="Custom date idea" style="margin-top:8px">
+<label id="l2">Outfit suggestion</label><div class="opts" id="outf" role="group" aria-labelledby="l2"></div>
+<input id="outC" class="hide" placeholder="Describe the outfit" aria-label="Custom outfit" style="margin-top:8px">
+<label id="l3">Outfit color <span id="cn" class="hint"></span></label><div class="opts" id="cols" role="group" aria-labelledby="l3"></div>
+<div class="opts" style="margin-top:8px;align-items:center"><input type="color" id="cpick" value="#f48fb1" aria-label="Custom color" style="width:56px;padding:2px"><input id="cname" placeholder="Custom color name (e.g. peach)" aria-label="Custom color name" style="flex:1;min-width:150px"></div>
+<label id="l4">Date</label><div class="cal" id="cal" role="group" aria-labelledby="l4"></div>
+<label for="time">Time</label><input type="time" id="time">
+<label for="place">Location / meeting place</label><input id="place" placeholder="Where should we meet?">
+<label for="note">Note or special instruction (optional)</label><textarea id="note"></textarea>
+<label id="l5">Love letter she opens first 💌</label><div class="opts" id="ltm" role="group" aria-labelledby="l5"></div>
+<textarea id="ltc" class="hide" placeholder="Write your own letter…" aria-label="Your own letter" style="margin-top:8px;min-height:140px"></textarea>
+<p class="hint" id="lth" style="margin:6px 0 0"></p>
+<div class="btns" style="min-height:0;margin-top:18px">
+<button class="btn" id="mk">🔗 Create share link</button><button class="btn alt" id="cpi">Copy invitation</button><button class="btn alt" id="pvs">👀 Preview the surprise</button><button class="btn alt" id="nw">New invitation</button>
+</div>
+<p class="hint" id="shareinfo" style="text-align:center"></p>
+<h2 class="script pv" style="text-align:center">Live preview</h2>
+<div id="pv"></div>
+</div>
+</section>
+
+<section id="msgs" class="hide">
+<div class="card">
+<h2 class="script">A bouquet with every message</h2>
+<p class="hint">Local demo: messages stay on this device only and are not delivered to anyone.</p>
+<div class="chat" id="chat" aria-live="polite"></div>
+<form class="send" id="sf"><input id="mi" placeholder="Type a sweet message…" aria-label="Message" autocomplete="off"><button class="btn" type="submit">Send</button></form>
+</div>
+</section>
+</main>
+</div>
+<div class="toast" id="toast" role="status"></div>
+
+<script>
+const $=s=>document.querySelector(s);
+const FOODS=[['🍣','Sushi date'],['☕','Coffee date'],['🥩','Samgyupsal date'],['🍝','Dinner date'],['🍰','Dessert date'],['🤭','Bahala na surprise'],['✏️','Custom']];
+const OUTF=['Casual','Comfy outfit','Dress up a little','Matching outfits','Your choice','Custom'];
+const COLS=[['Pink','#f7a6c1'],['White','#ffffff'],['Black','#222222'],['Yellow','#ffd43b'],['Blue','#7ab6f5'],['Brown','#8b5e3c'],['Lavender','#c3a8f0'],['Any color','conic-gradient(#f7a6c1,#ffd43b,#7ab6f5,#c3a8f0,#f7a6c1)']];
+const EMPTY={food:'',foodC:'',outf:'',outC:'',col:'',msg:'',date:'',time:'',place:'',note:'',lt:'',ltC:'',li:''};
+let P={...EMPTY},shared=false;
+const store={get(k){try{return localStorage.getItem(k)}catch(e){return null}},set(k,v){if(k==='sd_hist'&&window.CL&&CL.on){CL.setHist(JSON.parse(v));return}try{localStorage.setItem(k,v)}catch(e){}}};
+const esc=s=>String(s).replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
+function toast(t){const e=$('#toast');e.textContent=t;e.classList.add('on');clearTimeout(toast.t);toast.t=setTimeout(()=>e.classList.remove('on'),1800)}
+const enc=o=>btoa(unescape(encodeURIComponent(JSON.stringify(o)))).replace(/\+/g,'-').replace(/\//g,'_').replace(/=+$/,'');
+const dec=s=>JSON.parse(decodeURIComponent(escape(atob(s.replace(/-/g,'+').replace(/_/g,'/')))));
+const b64e=s=>btoa(unescape(encodeURIComponent(s))).replace(/\+/g,'-').replace(/\//g,'_').replace(/=+$/,'');
+const b64d=s=>decodeURIComponent(escape(atob(s.replace(/-/g,'+').replace(/_/g,'/'))));
+const SEP='\u001f';
+function pack(p){const fi=FOODS.findIndex(x=>x[1]===p.food),oi=OUTF.indexOf(p.outf),ci=COLS.findIndex(x=>x[0]===p.col),cc=p.col&&ci<0?p.col:'';
+const codes=(fi<0?'-':fi)+''+(oi<0?'-':oi)+(ci>=0?ci:(cc?'c':'-'))+(p.lt==='c'&&p.ltC?'c':(/^\d$/.test(String(p.li))?p.li:'-'));
+return [codes,p.date.replace(/-/g,'').slice(2),p.time.replace(':',''),fi===6?p.foodC:'',oi===5?p.outC:'',cc,p.msg,p.place,p.note,p.lt==='c'?p.ltC:''].join(SEP).replace(/\u001f+$/,'')}
+function unpack(s){const a=s.split(SEP),c=a[0]||'---',g=i=>a[i]||'',d=g(1),t=g(2);
+const f=c[0]==='-'?'':(FOODS[+c[0]]||[])[1]||'',o=c[1]==='-'?'':OUTF[+c[1]]||'',col=c[2]==='c'?g(5):(c[2]==='-'?'':(COLS[+c[2]]||[])[0]||'');
+return {...EMPTY,food:f,foodC:g(3),outf:o,outC:g(4),col,msg:g(6),place:g(7),note:g(8),date:d.length===6?'20'+d.slice(0,2)+'-'+d.slice(2,4)+'-'+d.slice(4):'',time:t.length===4?t.slice(0,2)+':'+t.slice(2):'',lt:c[3]==='c'?'c':'',ltC:c[3]==='c'?g(9):'',li:/^\d$/.test(c[3]||'')?c[3]:''}}
+
+/* petals */
+(function(){const b=$('#petals'),N=innerWidth<500?10:18;for(let i=0;i<N;i++){const e=document.createElement('i'),s=8+Math.random()*10;
+if(i%6==0){e.className='f';e.textContent=['🌻','🌼'][i%2];e.style.fontSize=(12+Math.random()*8)+'px'}else{e.style.width=s+'px';e.style.height=s*1.4+'px'}
+e.style.left=Math.random()*100+'%';e.style.setProperty('--dx',(Math.random()*120-60)+'px');e.style.setProperty('--r',(Math.random()*720-360)+'deg');
+e.style.animationDuration=(9+Math.random()*10)+'s';e.style.animationDelay=(-Math.random()*18)+'s';b.appendChild(e)}})();
+
+/* sunflower svg */
+function sunflower(){let p='';for(let i=0;i<14;i++)p+=`<ellipse cx="50" cy="20" rx="8" ry="17" fill="#ffc928" stroke="#f0a500" stroke-width="1" transform="rotate(${i*360/14} 50 50)"/>`;
+return `<svg class="sf" viewBox="0 0 100 100" role="img" aria-label="Sunflower">${p}${faceSrc()?`<circle cx="50" cy="50" r="26" fill="#7a4a2a"/><image href="${faceSrc()}" x="27" y="27" width="46" height="46"/><circle cx="50" cy="50" r="24" fill="none" stroke="#7a4a2a" stroke-width="2.5"/>`:`<circle cx="50" cy="50" r="15" fill="#7a4a2a"/><circle cx="50" cy="50" r="9" fill="#5a3418"/>`}</svg>`}
+
+/* details */
+function fmtD(d){if(!d)return'';const [y,m,x]=d.split('-');return new Date(y,m-1,x).toLocaleDateString(undefined,{weekday:'long',month:'long',day:'numeric'})}
+function fmtT(t){return t?new Date('1970-01-01T'+t).toLocaleTimeString(undefined,{hour:'numeric',minute:'2-digit'}):''}
+function rows(p){const f=p.food==='Custom'?p.foodC:p.food,fe=(FOODS.find(x=>x[1]===p.food)||[''])[0];
+const o=p.outf==='Custom'?p.outC:p.outf;
+return [['Date idea',f&&(p.food==='Custom'?'':fe+' ')+f],['When',[fmtD(p.date),fmtT(p.time)].filter(Boolean).join(' at ')],['Where',p.place],['Outfit',o],['Outfit color',p.col],['Note',p.note]].filter(r=>r[1])}
+function details(p){const r=rows(p);return r.length?`<ul class="det">${r.map(x=>`<li><b>${x[0]}</b>${esc(x[1])}</li>`).join('')}</ul>`:'<p class="hint">Date details will show here once they are filled in the planner.</p>'}
+function invite(p,live){return `<div class="invtext">${sunflower()}<h1 class="script">Hey you, yes you 🌻</h1><h2>Be my date? I promise it will be a whole vibe.</h2><p>${p.msg?esc(p.msg):'I planned something just for us, no cap…'}</p>${live?details(p):'<p class="hint">🔒 Say yes to unlock the date details 💗</p>'}</div>${live?'':'<div class="btns"><button class="btn" id="yb">YES, I\'M IN 💗</button><button class="btn" id="no">NO 😝</button></div>'}`}
+
+/* views */
+function show(v){['menu','inv','mem','intro','home','yes','plan','msgs'].forEach(k=>$('#'+k).classList.toggle('hide',k!==v));
+document.querySelectorAll('#nav button').forEach(b=>b.setAttribute('aria-current',b.dataset.v===(v==='mem'?'inv':v)));
+if(v==='inv')renderInv();if(v==='mem')renderMem();if(v==='menu'){renderMenu();installCard()}if(v==='intro')renderIntro();if(v==='home')renderHome();if(v==='plan')renderPlan();if(v==='msgs')renderMsgs();scrollTo(0,0)}
+document.querySelectorAll('#nav button').forEach(b=>b.onclick=()=>show(b.dataset.v));
+
+let n=0;
+function renderHome(){n=0;$('#home').innerHTML=`<div class="card">${invite(P)}${shared?'':'<p class="hint">Preview mode: this is what she will see.</p>'}</div>`;
+$('#yb').onclick=yes;const no=$('#no');
+no.addEventListener('pointerenter',e=>{if(e.pointerType==='mouse')dodge()});
+no.addEventListener('click',e=>{e.preventDefault();dodge()});if(!window.PointerEvent)no.addEventListener('mouseenter',dodge)}
+function hit(a,b,m=12){return !(a.right+m<b.left||a.left-m>b.right||a.bottom+m<b.top||a.top-m>b.bottom)}
+function dodge(){const no=$('#no'),y=$('#yb');if(!no)return;n++;
+if(n>=6){no.classList.add('gone');setTimeout(()=>no.remove(),600);y.style.transform='scale(1.25)';return}
+const w=no.offsetWidth,h=no.offsetHeight,yr=y.getBoundingClientRect(),tr=$('.invtext').getBoundingClientRect();
+let x=8,yy=8;for(let i=0;i<40;i++){x=8+Math.random()*(innerWidth-w-16);yy=8+Math.random()*(innerHeight-h-16);
+const r={left:x,right:x+w,top:yy,bottom:yy+h};if(!hit(r,yr)&&!hit(r,tr,0))break}
+no.style.position='fixed';no.style.left=x+'px';no.style.top=yy+'px';
+no.style.transform=`scale(${1-.13*n})`;y.style.transform=`scale(${1+.07*n})`}
+addEventListener('resize',()=>{const no=$('#no');if(no&&no.style.position==='fixed'){const w=no.offsetWidth,h=no.offsetHeight;no.style.left=Math.max(8,Math.min(parseFloat(no.style.left),innerWidth-w-8))+'px';no.style.top=Math.max(8,Math.min(parseFloat(no.style.top),innerHeight-h-8))+'px'}});
+function yes(){$('#home').classList.add('hide');const s=$('#yes');s.classList.remove('hide');
+s.innerHTML=`<div class="card">${sunflower()}<h1 class="script">YAYYY, IT'S A DATE! 💗</h1><h2>Best decision ever, I am so excited!</h2>${details(P)}<p class="script" style="font-size:1.3rem">See you soon, my favorite person 🌻</p><div class="btns" style="min-height:0"><button class="btn" id="cl">Close invitation</button></div></div>`;
+$('#cl').onclick=()=>{shared=false;try{P={...EMPTY,...JSON.parse(store.get('sd_draft')||'{}')}}catch(e){P={...EMPTY}}$('#nav').classList.remove('hide');show('menu')};burst();scrollTo(0,0)}
+function burst(){const E=['💗','🌻','✨','🌸','💛'];for(let i=0;i<36;i++){const e=document.createElement('span');e.className='fx';e.textContent=E[i%5];
+const a=Math.random()*6.28,d=100+Math.random()*220;e.style.setProperty('--x',Math.cos(a)*d+'px');e.style.setProperty('--y',(Math.sin(a)*d-40)+'px');e.style.setProperty('--r',(Math.random()*360)+'deg');
+document.body.appendChild(e);setTimeout(()=>e.remove(),1900)}}
+
+/* planner */
+function save(){store.set('sd_draft',JSON.stringify(P))}
+function pills(id,list,key,fn){const box=$(id);box.innerHTML='';list.forEach(x=>{const lab=fn(x),b=document.createElement('button');b.type='button';b.className='chip';b.textContent=lab.t;b.setAttribute('aria-pressed',P[key]===lab.v);b.onclick=()=>{P[key]=P[key]===lab.v?'':lab.v;save();renderPlan()};box.appendChild(b)})}
+function renderPlan(){
+pills('#food',FOODS,'food',x=>({t:x[0]+' '+x[1],v:x[1]}));pills('#outf',OUTF,'outf',x=>({t:x,v:x}));
+$('#foodC').classList.toggle('hide',P.food!=='Custom');$('#outC').classList.toggle('hide',P.outf!=='Custom');
+const cb=$('#cols');cb.innerHTML='';COLS.forEach(c=>{const b=document.createElement('button');b.type='button';b.className='sw';b.style.background=c[1];b.title=c[0];b.setAttribute('aria-label',c[0]);b.setAttribute('aria-pressed',P.col===c[0]);b.onclick=()=>{P.col=P.col===c[0]?'':c[0];save();renderPlan()};cb.appendChild(b)});
+$('#cn').textContent=P.col?'— '+P.col:'';
+renderLt();renderCal();['msg','foodC','outC','time','place','note'].forEach(k=>{const e=$('#'+k);if(e!==document.activeElement)e.value=P[k]});
+$('#pv').innerHTML=`<div class="card">${invite(P,true)}</div>`}
+['msg','foodC','outC','time','place','note'].forEach(k=>$('#'+k).addEventListener('input',e=>{P[k]=e.target.value;save();$('#pv').innerHTML=`<div class="card">${invite(P,true)}</div>`}));
+$('#cname').addEventListener('input',e=>{P.col=e.target.value.trim();save();$('#cn').textContent=P.col?'— '+P.col:''; $('#pv').innerHTML=`<div class="card">${invite(P,true)}</div>`});
+$('#cpick').addEventListener('input',e=>{if(!$('#cname').value.trim()){P.col='Custom '+e.target.value;save();renderPlan()}});
+function text(){return 'Hey you, yes you 🌻\nBe my date? I promise it will be a whole vibe.\n'+(P.msg?P.msg+'\n':'')+rows(P).map(r=>r[0]+': '+r[1]).join('\n')}
+async function copy(t,m){try{await navigator.clipboard.writeText(t);toast(m)}catch(e){const a=document.createElement('textarea');a.value=t;document.body.appendChild(a);a.select();try{document.execCommand('copy');toast(m)}catch(x){toast('Copy failed — select and copy manually')}a.remove()}}
+$('#mk').onclick=()=>{ensureLetter();const l=location.href.split('#')[0]+'#e'+b64e(pack(P));addHist(l);$('#shareinfo').textContent='Snapshot link created: later edits will not change it. When she opens it, she sees the sunflower bouquet and a letter first.';copy(l,'Link copied! 💗')};
+$('#cpi').onclick=()=>copy(text(),'Invitation copied! 💌');
+$('#pvs').onclick=()=>show('intro');
+$('#nw').onclick=()=>{P={...EMPTY};save();$('#cname').value='';$('#shareinfo').textContent='';renderPlan();toast('Fresh invitation ready 🌻')};
+
+/* menu */
+function hist(){if(window.CL&&CL.on)return CL.hist();try{return JSON.parse(store.get('sd_hist')||'[]')}catch(e){return[]}}
+function addHist(l){const f=(P.food==='Custom'?P.foodC:P.food)||'Date invitation',h=hist();if(h.some(x=>x.l===l))return;h.unshift({t:f,d:P.date,l,at:Date.now(),ok:false});store.set('sd_hist',JSON.stringify(h.slice(0,300)))}
+function renderMenu(){renderMenu0();window.cloudUI&&cloudUI();faceCard()}
+function renderMenu0(){const dr=Object.values(P).some(Boolean),H=hist();
+const it=(id,ic,t,s)=>`<button type="button" class="mi" id="${id}"><span class="mic" aria-hidden="true">${ic}</span><span class="mt"><b>${t}</b><small>${s}</small></span><span class="mar" aria-hidden="true">›</span></button>`;
+$('#menu').innerHTML=`<div class="card mhero">${sunflower()}<h1 class="script">Date Planner</h1><p class="hint" style="margin:0">Plan the cutest dates, make the best memories 🌻</p></div><div class="mlist">${it('m1','🌻','Plan a new date','Pick the food, day, time and place')}${dr?it('m2','🌸','Continue my draft','Pick up where you left off'):''}${it('m3','👀','Preview the surprise','See the bouquet and letter she will open')}${it('m4','💌','My invitations',H.length?H.length+' saved · answers, memories & photos':'Saved invitations and your memories together')}</div>${0?`<h2 class="script mh">Recent invitations</h2><div class="mlist">${H.map((x,i)=>`<div class="mi hist"><span class="mic" aria-hidden="true">💌</span><span class="mt"><b>${esc(x.t)}</b><small>${x.d?esc(fmtD(x.d)):'No date set'}</small></span><button type="button" class="chip" data-i="${i}">Copy link</button></div>`).join('')}</div>`:''}`}
+$('#menu').onclick=e=>{const b=e.target.closest('button');if(!b)return;
+if(b.id==='m1'){P={...EMPTY};save();CM=null;$('#cname').value='';$('#shareinfo').textContent='';show('plan');toast('Fresh invitation ready 🌻')}
+else if(b.id==='m2')show('plan');else if(b.id==='m3')show('intro');else if(b.id==='m4')show('inv');
+else if(b.dataset.i!==undefined){const x=hist()[+b.dataset.i];if(x)copy(x.l,'Link copied! 💗')}};
+
+/* invitations + memories */
+let curId=null,mt;
+function mget(){if(window.CL&&CL.on)return CL.mget();try{return JSON.parse(store.get('sd_mem')||'{}')}catch(e){return{}}}
+function mset(m){if(window.CL&&CL.on){CL.setMem(m);return true}try{localStorage.setItem('sd_mem',JSON.stringify(m));return true}catch(e){toast('Storage is full — remove a photo first');return false}}
+function twoTap(b,fn,label){if(b.dataset.arm){fn();return}b.dataset.arm='1';const o=b.textContent;b.textContent=label;setTimeout(()=>{if(b.isConnected){delete b.dataset.arm;b.textContent=o}},3000)}
+const DEFLET='Hey you,\n\nThis page is our little core memory vault. Every date, every laugh, every random moment lives here.\n\nThank you for saying yes. You are officially my favorite plot twist.\n\n— with all my heart 🌻';
+function shrink(file){return new Promise((res,rej)=>{const r=new FileReader();r.onerror=rej;r.onload=()=>{const im=new Image();im.onerror=rej;im.onload=()=>{const k=Math.min(1,800/Math.max(im.width,im.height)),c=document.createElement('canvas');c.width=Math.round(im.width*k);c.height=Math.round(im.height*k);c.getContext('2d').drawImage(im,0,0,c.width,c.height);res(c.toDataURL('image/jpeg',.72))};im.src=r.result};r.readAsDataURL(file)})}
+function renderInv(){const H=hist(),M=mget();
+const it=H.map(x=>{const n=((M[x.at]||{}).items||[]).length;
+return `<div class="ic" data-id="${x.at}"><div class="ich"><span class="mic" aria-hidden="true">${x.ok?'💗':'💌'}</span><span class="mt"><b>${esc(x.t)}</b><small>${x.d?esc(fmtD(x.d)):'No date set'}${x.ok?' · She said yes 💗':' · Waiting for her answer'}${n?' · '+n+' photo'+(n>1?'s':''):''}</small></span></div><div class="acts"><button type="button" class="chip" data-a="mem">📷 Memories</button><button type="button" class="chip" data-a="copy">🔗 Copy link</button><button type="button" class="chip" data-a="ok">${x.ok?'↩ Undo yes':'💗 She said yes'}</button><button type="button" class="chip" data-a="edit">✏️ Edit copy</button><button type="button" class="chip dng" data-a="del">🗑 Delete</button></div></div>`}).join('');
+$('#inv').innerHTML=`<div class="card mhero"><h2 class="script">My invitations</h2><p class="hint" style="margin:0">Mark her answer, keep your memories, or remove one that is wrong.</p></div><div class="mlist">${it||'<p class="empty">No invitations yet 🌻<br>Create a share link in the Planner and it will be saved here.</p>'}</div><div class="btns" style="min-height:0;margin-top:16px"><button type="button" class="btn" id="inew">＋ New invitation</button></div>`}
+$('#inv').onclick=e=>{const b=e.target.closest('button');if(!b)return;
+if(b.id==='inew'){P={...EMPTY};save();CM=null;$('#cname').value='';$('#shareinfo').textContent='';show('plan');return}
+const c=b.closest('.ic');if(!c)return;const id=c.dataset.id,H=hist(),x=H.find(h=>String(h.at)===id);if(!x)return;const a=b.dataset.a;
+if(a==='mem'){curId=id;show('mem')}
+else if(a==='copy')copy(x.l,'Link copied! 💗')
+else if(a==='ok'){x.ok=!x.ok;store.set('sd_hist',JSON.stringify(H));renderInv();toast(x.ok?'She said yes! 💗':'Marked as waiting')}
+else if(a==='edit'){try{const s=x.l.split('#')[1]||'';P=s[0]==='e'?unpack(b64d(s.slice(1))):dec(s.slice(1));save();CM=null;show('plan');toast('Editing a copy — create a new link when done')}catch(err){toast('Could not open this invitation')}}
+else if(a==='del')twoTap(b,()=>{store.set('sd_hist',JSON.stringify(H.filter(h=>String(h.at)!==id)));const all=mget();delete all[id];mset(all);renderInv();toast('Invitation removed')},'Sure? Tap again')};
+function renderMem(){const x=hist().find(h=>String(h.at)===curId);if(!x){show('inv');return}
+const m=mget()[curId]||{items:[]};
+const items=(m.items||[]).map(i=>`<figure class="pol"><img src="${i.img}" alt="Memory photo"><input class="cap" data-k="${i.id}" value="${esc(i.cap||'')}" placeholder="Write a caption…" aria-label="Caption"><div class="polf"><small>${new Date(i.at).toLocaleDateString()}</small><button type="button" class="chip" data-del="${i.id}">✕ Remove</button></div></figure>`).join('');
+$('#mem').innerHTML=`<div class="card mhero"><button type="button" class="chip" id="mb">← My invitations</button><h2 class="script" style="margin-top:10px">Our memories 💌</h2><p class="hint" style="margin:0">${esc(x.t)}${x.d?' · '+esc(fmtD(x.d)):''}</p></div><div class="card" style="text-align:left"><label for="mlt" style="margin-top:0">Our letter</label><textarea id="mlt" style="min-height:190px;line-height:1.6">${esc(m.letter!==undefined?m.letter:DEFLET)}</textarea><p class="hint" style="margin:6px 0 0">Saved automatically and synced.</p></div><h2 class="script mh">Our photos</h2>${items?`<div class="gal">${items}</div>`:'<p class="empty">No photos yet 🌻<br>Add the first memory of this date.</p>'}<div class="btns" style="min-height:0;margin-top:16px"><button type="button" class="btn" id="addp">📷 Add photos</button></div><input type="file" id="ph" accept="image/*" multiple class="hide">`}
+$('#mem').addEventListener('click',e=>{const b=e.target.closest('button');if(!b)return;
+if(b.id==='mb')show('inv');else if(b.id==='addp')$('#ph').click();
+else if(b.dataset.del)twoTap(b,()=>{const all=mget(),o=all[curId];if(o){o.items=(o.items||[]).filter(i=>i.id!==b.dataset.del);mset(all)}renderMem()},'Sure? Tap again')});
+$('#mem').addEventListener('input',e=>{const t=e.target;if(t.id!=='mlt'&&!t.dataset.k)return;clearTimeout(mt);
+mt=setTimeout(()=>{const all=mget(),o=all[curId]||(all[curId]={items:[]});
+if(t.id==='mlt')o.letter=t.value;else{const i=(o.items||[]).find(i=>i.id===t.dataset.k);if(i)i.cap=t.value}mset(all)},400)});
+$('#mem').addEventListener('change',async e=>{if(e.target.id!=='ph')return;const fs=[...e.target.files];if(!fs.length)return;toast('Adding photos…');
+const all=mget(),o=all[curId]||(all[curId]={items:[]});o.items=o.items||[];
+for(const f of fs){try{o.items.push({id:'p'+Date.now()+Math.random().toString(36).slice(2,6),img:await shrink(f),cap:'',at:Date.now()})}catch(x){toast('Could not read that photo')}}
+if(mset(all))renderMem();e.target.value=''});
+
+/* love letters */
+const LETTERS=[
+['Hey you,','Not to be dramatic, but you are lowkey my favorite person on this planet.','So I made you this little sunflower bouquet because you deserve all the pretty things.','Be my date? No pressure… okay, a little pressure.','— yours, always 🌻'],
+['Hi, my person,','You are literally my favorite notification. Every time your name pops up, my whole day gets better.','This bouquet is the closest I can get to handing you flowers through a screen, so enjoy.','Let us make another core memory together?','— your biggest fan 💛'],
+['Hey, gorgeous,','No cap, you make everything feel softer, brighter, and way more fun.','I planned a little something just for us, and I think you are going to love it.','Say yes and let me handle the rest.','— with love, me 🌻'],
+['To my favorite human,','It is giving main character energy, and honestly I am just lucky to be in your story.','You glow brighter than every sunflower in this bouquet, and that is a fact.','So… are you free for a date with me?','— forever yours 💗'],
+['Hi, love,','I am obsessed with the way you laugh, the way you care, and the way you make me feel at home.','Consider this bouquet a tiny preview of how much you mean to me.','Will you let me take you out?','— all yours 🌻'],
+['My sunshine,','You are my green flag, my comfort person, and my favorite plot twist all in one.','Some people collect memories, but I would rather collect them with you.','Date night? I will bring the good vibes.','— with all my heart 💗'],
+['Hey cutie,','I tried to act normal about how much I like you, but this bouquet says otherwise.','You are the best part of my day, every single day, no exceptions.','Come on a date with me and let us make it unforgettable?','— your number one 🌻'],
+['Dear you,','Thank you for being you. Soft, funny, and so easy to adore.','I made this little surprise because you deserve to feel as special as you make me feel.','Ready for our next date? I already cannot wait.','— with so much love 💛']
+];
+function ensureLetter(){if(P.lt!=='c'&&!/^\d$/.test(String(P.li))){const last=parseInt(store.get('sd_lastl'),10);let i;do{i=Math.floor(Math.random()*LETTERS.length)}while(i===last);P.li=String(i);store.set('sd_lastl',String(i));save()}}
+function letterHtml(){if(P.lt==='c'&&P.ltC&&P.ltC.trim())return `<div class="paper">${P.ltC.trim().split(/\n+/).map(l=>`<p>${esc(l)}</p>`).join('')}</div>`;
+if(!shared)ensureLetter();const L=LETTERS[+P.li]||LETTERS[0];
+return `<div class="paper"><p class="script" style="font-size:1.3rem">${esc(L[0])}</p>${L.slice(1,-1).map(t=>`<p>${esc(t)}</p>`).join('')}<p class="script" style="text-align:right">${esc(L[L.length-1])}</p></div>`}
+function renderLt(){const lb=$('#ltm');lb.innerHTML='';[['','🎲 Surprise me — different each time'],['c','✍️ Write my own']].forEach(o=>{const b=document.createElement('button');b.type='button';b.className='chip';b.textContent=o[1];b.setAttribute('aria-pressed',(P.lt==='c')===(o[0]==='c'));b.onclick=()=>{P.lt=o[0];save();renderPlan()};lb.appendChild(b)});
+$('#ltc').classList.toggle('hide',P.lt!=='c');if($('#ltc')!==document.activeElement)$('#ltc').value=P.ltC||'';
+$('#lth').textContent=P.lt==='c'?'Your own letter is saved inside the link, so a longer letter means a longer link.':'A new sweet letter is picked for every invitation, never the same one twice in a row.'}
+$('#ltc').addEventListener('input',e=>{P.ltC=e.target.value;save()});
+
+/* intro: sunflower bouquet + letter */
+function bouquet(){const fl=[[100,70,1,0],[55,95,.85,.5],[145,95,.85,.9],[75,140,.7,1.3],[125,140,.7,1.6]];
+let s=`<svg class="bqt" viewBox="0 0 200 250" role="img" aria-label="A bouquet of sunflowers">`;
+fl.forEach(f=>{s+=`<path class="stem" pathLength="1" d="M100 215 Q${(100+f[0])/2} ${(215+f[1])/2+10} ${f[0]} ${f[1]}" style="animation-delay:${f[3]*.5}s"/>`});
+s+=`<ellipse class="lf" cx="78" cy="172" rx="14" ry="6" fill="#6cb44a" transform="rotate(-35 78 172)"/><ellipse class="lf" cx="124" cy="174" rx="14" ry="6" fill="#6cb44a" transform="rotate(35 124 174)"/>`;
+fl.forEach(f=>{let p='';for(let i=0;i<12;i++)p+=`<ellipse cx="0" cy="-22" rx="7" ry="14" fill="#ffc928" stroke="#f0a500" stroke-width=".8" transform="rotate(${i*30})"/>`;
+s+=`<g transform="translate(${f[0]} ${f[1]}) scale(${f[2]})"><g class="fl" style="animation-delay:${1+f[3]}s">${p}${(f[3]===0&&faceSrc())?`<circle r="19" fill="#7a4a2a"/><image href="${faceSrc()}" x="-17" y="-17" width="34" height="34"/><circle r="18" fill="none" stroke="#7a4a2a" stroke-width="2"/>`:`<circle r="12" fill="#7a4a2a"/><circle r="7" fill="#5a3418"/>`}</g></g>`});
+return s+`<g class="pap"><path d="M52 190 L148 190 L118 245 L82 245 Z" fill="#f9b8cf" stroke="#e07aa0" stroke-width="2" stroke-linejoin="round"/><path d="M100 205 l-16 -9 q-4 9 0 18z M100 205 l16 -9 q4 9 0 18z" fill="#ff6f9f"/><circle cx="100" cy="205" r="5" fill="#d6578a"/></g></svg>`}
+function renderIntro(){const reduce=matchMedia('(prefers-reduced-motion:reduce)').matches;
+let hs='';for(let i=0;i<9;i++)hs+=`<span class="hrt" aria-hidden="true" style="left:${5+Math.random()*90}%;font-size:${14+Math.random()*10}px;animation-duration:${6+Math.random()*5}s;animation-delay:${1+Math.random()*6}s">${['💗','🌻','✨','💛'][i%4]}</span>`;
+const envSvg=`<svg viewBox="0 0 120 84" width="120" height="84" aria-hidden="true"><rect x="2" y="2" width="116" height="80" rx="10" fill="#fff4f8" stroke="#e07aa0" stroke-width="3"/><path d="M4 8 L60 50 L116 8" fill="none" stroke="#e07aa0" stroke-width="3" stroke-linejoin="round"/><circle cx="60" cy="48" r="13" fill="#ff6f9f"/><text x="60" y="54" text-anchor="middle" font-size="15">💗</text></svg>`;
+$('#intro').innerHTML=`<div class="card intro">${hs}<p class="script fadeup" style="font-size:1.4rem;margin:4px 0">POV: someone grew you a bouquet</p>${bouquet()}<p class="script fadeup" style="font-size:1.5rem;margin:6px 0;animation-delay:3s">For you, my favorite person 🌻</p><button type="button" class="env" id="env" aria-label="Open the letter">${envSvg}</button><p class="remind" id="rmd">💌 Tap the letter, you got a message</p><div id="ltr"></div></div>`;
+setTimeout(()=>{const e=$('#env'),r=$('#rmd');if(e&&r){e.classList.add('on');r.classList.add('on')}},reduce?0:3300);
+$('#env').onclick=()=>{$('#env').classList.add('hide');$('#rmd').classList.add('hide');
+$('#ltr').innerHTML=`${letterHtml()}<div class="btns" style="min-height:0;margin-top:14px"><button type="button" class="btn" id="ov">Open my invitation 🌻</button></div>`;
+$('#ov').onclick=()=>show('home');burst();$('#ltr').scrollIntoView({behavior:'smooth',block:'center'})}}
+
+/* calendar */
+let CM=null;
+const iso=d=>d.getFullYear()+'-'+String(d.getMonth()+1).padStart(2,'0')+'-'+String(d.getDate()).padStart(2,'0');
+function renderCal(){const box=$('#cal'),now=new Date(),today=new Date(now.getFullYear(),now.getMonth(),now.getDate());
+if(!CM){const b=P.date?new Date(P.date+'T00:00'):today;CM=new Date(b.getFullYear(),b.getMonth(),1)}
+const y=CM.getFullYear(),m=CM.getMonth(),first=new Date(y,m,1).getDay(),days=new Date(y,m+1,0).getDate(),canPrev=new Date(y,m,1)>new Date(today.getFullYear(),today.getMonth(),1);
+let h=`<div class="calh"><button type="button" class="calnav" id="cp" aria-label="Previous month"${canPrev?'':' disabled'}>‹</button><strong class="script">${CM.toLocaleDateString(undefined,{month:'long',year:'numeric'})}</strong><button type="button" class="calnav" id="cx" aria-label="Next month">›</button></div><div class="calg">`;
+['S','M','T','W','T','F','S'].forEach(d=>h+=`<span class="cwd" aria-hidden="true">${d}</span>`);
+for(let i=0;i<first;i++)h+='<span></span>';
+for(let d=1;d<=days;d++){const dt=new Date(y,m,d),v=iso(dt);
+h+=`<button type="button" class="cd${v===P.date?' sel':''}${dt.getTime()===today.getTime()?' td':''}" data-d="${v}" aria-pressed="${v===P.date}" aria-label="${dt.toLocaleDateString(undefined,{weekday:'long',month:'long',day:'numeric',year:'numeric'})}"${dt<today?' disabled':''}>${d}</button>`}
+h+=`</div><div class="opts calq"><button type="button" class="chip" data-q="0">Today</button><button type="button" class="chip" data-q="1">Tomorrow</button><button type="button" class="chip" data-q="sat">This Saturday</button></div><p class="hint" style="text-align:center;margin:8px 0 0">${P.date?'Picked: '+esc(fmtD(P.date)):'Tap a day to pick the date'}</p>`;
+box.innerHTML=h}
+$('#cal').onclick=e=>{const t=e.target.closest('button');if(!t||t.disabled)return;
+if(t.id==='cp'){CM=new Date(CM.getFullYear(),CM.getMonth()-1,1);renderCal();return}
+if(t.id==='cx'){CM=new Date(CM.getFullYear(),CM.getMonth()+1,1);renderCal();return}
+if(t.dataset.d){P.date=P.date===t.dataset.d?'':t.dataset.d;save();renderPlan();return}
+if(t.dataset.q){const n0=new Date(),d=new Date(n0.getFullYear(),n0.getMonth(),n0.getDate());
+if(t.dataset.q==='sat')d.setDate(d.getDate()+(6-d.getDay()+7)%7);else d.setDate(d.getDate()+(+t.dataset.q));
+P.date=iso(d);CM=null;save();renderPlan()}};
+
+/* messages */
+let M=[];try{M=JSON.parse(store.get('sd_msgs')||'[]')}catch(e){}
+function renderMsgs(){const c=$('#chat');c.innerHTML=M.length?'':'<p class="empty">No messages yet 🌻<br>Send one and a little bouquet comes with it.</p>';
+M.forEach((m,i)=>{const r=document.createElement('div');r.className='row';r.innerHTML=`<div class="bub">${esc(m.t)}<small>${new Date(m.at).toLocaleTimeString([],{hour:'numeric',minute:'2-digit'})} · local demo</small></div><span class="bq" aria-hidden="true">💐<i>🌻</i><i>✿</i></span>`;c.appendChild(r)});c.lastElementChild&&c.lastElementChild.scrollIntoView({block:'nearest'})}
+$('#sf').onsubmit=e=>{e.preventDefault();const v=$('#mi').value.trim();if(!v)return;M.push({t:v,at:Date.now()});store.set('sd_msgs',JSON.stringify(M.slice(-100)));$('#mi').value='';renderMsgs()};
+
+/* her face in the sunflower */
+const FACE_URL='';   // set to 'her.png' once her photo is added to this folder
+function faceSrc(){return FACE_URL||store.get('sd_face')||''}
+function faceCrop(file){return new Promise((res,rej)=>{const r=new FileReader();r.onerror=rej;r.onload=()=>{const im=new Image();im.onerror=rej;im.onload=()=>{const S=220,c=document.createElement('canvas');c.width=c.height=S;const x=c.getContext('2d');x.beginPath();x.arc(S/2,S/2,S/2,0,6.2832);x.clip();const k=Math.max(S/im.width,S/im.height),w=im.width*k,hh=im.height*k;x.drawImage(im,(S-w)/2,hh>S?-(hh-S)*.3:(S-hh)/2,w,hh);res(c.toDataURL('image/png'))};im.src=r.result};r.readAsDataURL(file)})}
+function faceCard(){const old=$('#facec');if(old)old.remove();if(FACE_URL||/^#(e|d)./.test(location.hash))return;
+const has=!!faceSrc(),d=document.createElement('div');d.id='facec';d.className='card';d.style.marginTop='14px';
+d.innerHTML=`<h2 class="script">${has?'Her face is in the sunflower 🌻':'Put her face in the sunflower 🌻'}</h2><p class="hint">Pick a photo. It stays on this device only.</p><div class="btns" style="min-height:0"><button type="button" class="btn" id="fpick">📷 ${has?'Change':'Choose'} photo</button>${has?'<button type="button" class="btn alt" id="frem">Remove</button>':''}</div><input type="file" id="fin" accept="image/*" class="hide">`;
+$('#menu').appendChild(d);$('#fpick').onclick=()=>$('#fin').click();
+const rm=$('#frem');if(rm)rm.onclick=()=>{try{localStorage.removeItem('sd_face')}catch(e){}renderMenu()};
+$('#fin').onchange=async e=>{const f=e.target.files[0];if(!f)return;try{localStorage.setItem('sd_face',await faceCrop(f));renderMenu();toast('Looking good 🌻')}catch(x){toast('Could not use that photo')}}}
+
+/* install as app + offline */
+let dip=null;
+addEventListener('beforeinstallprompt',e=>{e.preventDefault();dip=e;if(!$('#menu').classList.contains('hide'))installCard()});
+addEventListener('appinstalled',()=>{dip=null;const i=$('#inst');if(i)i.remove()});
+function installCard(){const m=$('#menu');if($('#inst')||matchMedia('(display-mode: standalone)').matches||navigator.standalone)return;
+const ios=/iphone|ipad|ipod/i.test(navigator.userAgent)||(navigator.platform==='MacIntel'&&navigator.maxTouchPoints>1);
+if(!dip&&!ios)return;
+const d=document.createElement('div');d.id='inst';d.className='card';d.style.marginTop='14px';
+d.innerHTML=dip?'<h2 class="script">Install as an app 📲</h2><p class="hint">Add Date Planner to your home screen.</p><div class="btns" style="min-height:0"><button type="button" class="btn" id="instb">Install</button></div>':'<h2 class="script">Install as an app 📲</h2><p class="hint">Tap the Share button, then “Add to Home Screen”.</p>';
+m.appendChild(d);const b=$('#instb');if(b)b.onclick=async()=>{dip.prompt();try{await dip.userChoice}catch(e){}dip=null;d.remove()}}
+if('serviceWorker' in navigator&&location.protocol.indexOf('http')===0)addEventListener('load',()=>navigator.serviceWorker.register('sw.js').catch(()=>{}));
+
+/* init */
+(function(){const h=location.hash.slice(1);
+addEventListener('hashchange',()=>location.reload());
+if(h==='demo'){const pick=[{food:'Sushi date',outf:'Dress up a little',col:'Pink',msg:'I saw this and thought of you. Come with me?',place:'Our favorite sushi place',time:'18:30',note:'Come hungry! 🍣'},{food:'Coffee date',outf:'Comfy outfit',col:'Yellow',msg:'Just us, a warm drink, and a long chat.',place:'The cozy café by the park',time:'15:00',note:'My treat ☕'},{food:'Samgyupsal date',outf:'Casual',col:'Lavender',msg:'I have a craving… and I want you there.',place:'Samgyup place near the mall',time:'19:00',note:'Bring your appetite 🥩'}][Math.floor(Math.random()*3)];
+const d=new Date();d.setDate(d.getDate()+((6-d.getDay()+7)%7||7));P={...EMPTY,...pick,date:iso(d),li:String(Math.floor(Math.random()*LETTERS.length))};shared=true;$('#nav').classList.add('hide');show('intro');return}
+if(h[0]==='e'&&h.length>2){try{P=unpack(b64d(h.slice(1)));shared=true;$('#nav').classList.add('hide');show('intro');return}catch(e){}}
+if(h[0]==='d'&&h.length>3){try{P={...EMPTY,...dec(h.slice(1))};shared=true;$('#nav').classList.add('hide');show('intro');return}catch(e){}}
+try{P={...EMPTY,...JSON.parse(store.get('sd_draft')||'{}')}}catch(e){}
+show('menu')})();
+</script>
+<script type="module">
+import{initializeApp}from"https://www.gstatic.com/firebasejs/10.14.1/firebase-app.js";
+import{getAuth,onAuthStateChanged,signInWithEmailAndPassword,signOut}from"https://www.gstatic.com/firebasejs/10.14.1/firebase-auth.js";
+import{initializeFirestore,persistentLocalCache,collection,doc,setDoc,deleteDoc,onSnapshot}from"https://www.gstatic.com/firebasejs/10.14.1/firebase-firestore.js";
+const ADMIN="4jQbiK8FICbtqmm2CKJvynRVEX02",PARTNER="crpDIgIRRjTTbvdOnOf4KjkoUj73";
+const app=initializeApp({apiKey:"AIzaSyBM7lm1UpzZiwDEklpdsCMXnODcB1DYC7o",authDomain:"dates-planner.firebaseapp.com",projectId:"dates-planner",messagingSenderId:"275993488366",appId:"1:275993488366:web:3c1c6d4a0ee016cae8fcff"});
+const auth=getAuth(app),db=initializeFirestore(app,{localCache:persistentLocalCache()});
+const CL=window.CL={on:false,role:"",uid:"",inv:{},ml:{},ph:{},un:[]};
+const wr=p=>p.catch(e=>window.toast&&toast("Could not save ("+(e.code||"error")+")"));
+const refresh=()=>{const a=document.activeElement;if(a&&a.closest&&a.closest("#mem")&&/TEXTAREA|INPUT/.test(a.tagName))return;
+const vis=v=>!document.getElementById(v).classList.contains("hide");
+if(vis("menu"))renderMenu();else if(vis("inv"))renderInv();else if(vis("mem"))renderMem()};
+CL.hist=()=>Object.values(CL.inv).map(x=>({...x})).sort((a,b)=>b.at-a.at);
+CL.mget=()=>{const m={};for(const id in CL.inv)m[id]={items:[]};for(const id in CL.ml)(m[id]=m[id]||{items:[]}).letter=CL.ml[id];
+Object.values(CL.ph).sort((a,b)=>a.at-b.at).forEach(p=>{(m[p.inv]=m[p.inv]||{items:[]}).items.push({id:p.id,img:p.img,cap:p.cap||"",at:p.at})});return m};
+CL.setHist=a=>{const ids=new Set(a.map(x=>String(x.at)));
+a.forEach(x=>{const id=String(x.at),n={t:x.t||"",d:x.d||"",l:x.l||"",ok:!!x.ok,at:x.at};
+if(JSON.stringify(CL.inv[id])!==JSON.stringify(n)){CL.inv[id]=n;wr(setDoc(doc(db,"inv",id),n))}});
+for(const id in CL.inv)if(!ids.has(id)){delete CL.inv[id];wr(deleteDoc(doc(db,"inv",id)))}};
+CL.setMem=all=>{const seen=new Set();
+for(const id in all){const o=all[id];
+if(o.letter!==undefined&&o.letter!==CL.ml[id]){CL.ml[id]=o.letter;wr(setDoc(doc(db,"mem",id),{letter:o.letter}))}
+(o.items||[]).forEach(i=>{seen.add(i.id);const p=CL.ph[i.id];
+if(!p){const n={inv:id,img:i.img,cap:i.cap||"",at:i.at,by:CL.uid};CL.ph[i.id]={id:i.id,...n};wr(setDoc(doc(db,"ph",i.id),n))}
+else if((i.cap||"")!==(p.cap||"")){p.cap=i.cap||"";wr(setDoc(doc(db,"ph",i.id),{cap:p.cap},{merge:true}))}})}
+for(const pid in CL.ph)if(!seen.has(pid)){delete CL.ph[pid];wr(deleteDoc(doc(db,"ph",pid)))}
+for(const id in CL.ml)if(!(id in all)){delete CL.ml[id];wr(deleteDoc(doc(db,"mem",id)))}};
+CL.migrate=()=>{let h=[],m={};try{h=JSON.parse(localStorage.getItem("sd_hist")||"[]");m=JSON.parse(localStorage.getItem("sd_mem")||"{}")}catch(e){}
+const H=CL.hist();h.forEach(x=>{if(!CL.inv[String(x.at)])H.push(x)});CL.setHist(H);
+const all=CL.mget();for(const id in m){const o=all[id]=all[id]||{items:[]};
+if(m[id].letter!==undefined&&o.letter===undefined)o.letter=m[id].letter;
+(m[id].items||[]).forEach(i=>{if(!o.items.some(j=>j.id===i.id))o.items.push(i)})}
+CL.setMem(all);try{localStorage.setItem("sd_mig","1")}catch(e){}refresh();toast("Uploaded 🌻")};
+const sub=()=>{const er=e=>window.toast&&toast("Sync error ("+(e.code||"?")+")");
+CL.un=[onSnapshot(collection(db,"inv"),s=>{CL.inv={};s.forEach(d=>CL.inv[d.id]=d.data());refresh()},er),
+onSnapshot(collection(db,"mem"),s=>{CL.ml={};s.forEach(d=>CL.ml[d.id]=d.data().letter);refresh()},er),
+onSnapshot(collection(db,"ph"),s=>{CL.ph={};s.forEach(d=>CL.ph[d.id]={id:d.id,...d.data()});refresh()},er)]};
+onAuthStateChanged(auth,u=>{CL.un.forEach(f=>f());CL.un=[];
+if(u&&(u.uid===ADMIN||u.uid===PARTNER)){CL.uid=u.uid;CL.role=u.uid===ADMIN?"admin":"partner";CL.on=true;sub()}
+else{CL.on=false;CL.role="";CL.inv={};CL.ml={};CL.ph={};if(u)signOut(auth)}
+document.body.classList.toggle("partner",CL.role==="partner");
+const v=document.getElementById("menu");if(v&&!v.classList.contains("hide"))renderMenu();else refresh()});
+window.cloudUI=()=>{const m=document.getElementById("menu");if(!m)return;let h;
+if(CL.on){let loc=0;try{loc=JSON.parse(localStorage.getItem("sd_hist")||"[]").length}catch(e){}
+h='<p class="hint" style="margin:0 0 8px">☁️ Synced · '+CL.role+'</p>'+(CL.role==="admin"&&loc&&!localStorage.getItem("sd_mig")?'<button type="button" class="chip" id="cmig">⬆ Upload this phone\'s data</button> ':'')+'<button type="button" class="chip" id="cout">Sign out</button>'}
+else h='<button type="button" class="chip" id="cin">☁️ Sign in to sync</button>';
+m.insertAdjacentHTML("beforeend",'<div class="card" style="margin-top:14px">'+h+'</div>')};
+document.getElementById("menu").addEventListener("click",e=>{const b=e.target.closest("button");if(!b)return;
+if(b.id==="cout")signOut(auth);else if(b.id==="cmig")CL.migrate();
+else if(b.id==="cin"){const d=document.createElement("div");d.style.cssText="position:fixed;inset:0;background:#0008;z-index:99;display:flex;align-items:center;justify-content:center;padding:20px";
+d.innerHTML='<div class="card" style="max-width:340px;width:100%"><h2 class="script">Sign in 🌻</h2><input id="le" type="email" placeholder="Email" autocomplete="username" style="width:100%;margin:6px 0"><input id="lp" type="password" placeholder="Password" autocomplete="current-password" style="width:100%;margin:6px 0"><p class="hint" id="lm"></p><button type="button" class="btn" id="lg">Sign in</button> <button type="button" class="chip" id="lx">Cancel</button></div>';
+document.body.appendChild(d);d.querySelector("#lx").onclick=()=>d.remove();
+d.querySelector("#lg").onclick=async()=>{try{await signInWithEmailAndPassword(auth,d.querySelector("#le").value.trim(),d.querySelector("#lp").value);d.remove();toast("Signed in 🌻")}catch(x){d.querySelector("#lm").textContent="Wrong email or password"}}}});
+</script>
+</body></html>
